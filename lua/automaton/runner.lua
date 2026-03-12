@@ -207,7 +207,9 @@ function Runner._run(config, ws, cmds, e, onexit, i)
             Runner._open_quickfix()
             vim.api.nvim_command("wincmd p") -- Go Back to the previous window
         else
-            options.pty = true
+            if vim.fn.has("win32") == 0 then
+                options.pty = true
+            end
         end
 
         local handleoutput = function(_, lines, _)
@@ -250,7 +252,10 @@ function Runner._run(config, ws, cmds, e, onexit, i)
         if e.quickfix ~= true then
             Runner._close_quickfix()
 
-            if Runner.termbufid == nil or vim.fn.getbufinfo(Runner.termbufid)[1].hidden == 1 then
+            if Runner.termbufid == nil 
+                or not vim.api.nvim_buf_is_valid(Runner.termbufid) 
+                or vim.fn.getbufinfo(Runner.termbufid)[1].hidden == 1 -- user may have closed output with :bd!
+                then
                 Runner.close_terminal()
                 vim.api.nvim_command(vim.F.if_nil(config.terminal.position, "botright") .. " split")
                 Runner.termwinid = vim.api.nvim_get_current_win()
